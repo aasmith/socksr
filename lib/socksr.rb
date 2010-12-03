@@ -6,7 +6,6 @@ require 'socket'
 require 'logger'
 
 $log = Logger.new(STDOUT)
-$log.level = Logger::WARN
 
 # Socks 5 protocol constant value
 SOCKS5_VERSION 				      = 0x05
@@ -189,7 +188,7 @@ def socks_do(cmd, client, host, port, atyp, raw_host, raw_port)
       end
       loop do # main loop
         readables, writeables, exceptions = IO.select([client, target])
-        if exceptions
+        unless exceptions.empty?
           $log.error {"Error in select"}
           return false
         end
@@ -319,11 +318,11 @@ def process_method_request(io)
   return success
 end
 
-server = TCPServer.new(1080)
+server = TCPServer.new("0.0.0.0", 1080)
 
 $log.info {"Ruby Socks5 Server running on #{Socket.gethostname}"}
 
-trap("INT") { server.stop }
+trap("INT") { server.close }
 
 while client = server.accept do
   $log.info {"Accepted connection from #{client.peeraddr[2]}"}
